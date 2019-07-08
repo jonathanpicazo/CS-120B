@@ -32,22 +32,6 @@ continue 5
 expectPORTB 0x01
 checkResult
 #2
-#single press
-test "PINA: 0x01 => PORTB: 0x02"
-setPINA 0x01
-continue 5
-expectPORTB 0x02
-checkResult
-#3
-#double press
-test "PINA: 0x01, PINA: 0x01 => PORTB: 0x02"
-setPINA 0x01
-continue 5
-setPINA 0x01
-continue 5
-expectPORTB 0x02
-checkResult
-#3
 #triple press
 test "PINA: 0x01, PINA: 0x01, PINA: 0x01 => PORTB: 0x01"
 setPINA 0x01
@@ -56,8 +40,10 @@ setPINA 0x01
 continue 5
 setPINA 0x01
 continue 5
-expectPORTB 0x01
+expectPORTB 0x02
 checkResult
+
+
 
 
 # Report on how many tests passed/tests ran

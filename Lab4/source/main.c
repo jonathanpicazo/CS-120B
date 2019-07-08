@@ -13,78 +13,65 @@
 #endif
 
 
-enum States {init, start, increment, decrement} state;
+enum States {init, wait, increment, decrement, reset} state;
 void tick(){
+    unsigned char input = PINA;
     switch(state){ 
-        case init:
-            state = start; 
-            break;
-        case start:
-            if (PINA == 0x01) {
-                state = increment;
-            }
-            else if (PINA == 0x02) {
-                state = decrement;
-            }
-            else if (PINA == 0x03) {
-                state = init;
-            }
-            else {
-                state = start;
-            }
-            break;
-        case increment:
-            if (PINA == 0x01 && (PORTC < 0x0A)) { 
-                state = increment; 
-            }
-            else if (PINA == 0x02 && (PORTC >= 0x00)){
-                state = decrement;
-            }
-            else if (PINA == 0x03) {
-                state = init;
-            }
-            else {
-                state = init;
-            }
-            break;
-        case decrement:
-            if (PINA == 0x01 && (PORTC < 10)) { 
-                state = increment; 
-            }
-            else if (PINA == 0x02 && (PORTC >= 0)){
-                state = decrement;
-            }
-            else if (PINA == 0x03) {
-                state = init;
-            }
-            else {
-                state = init;
-            }
-            break;
-        default:
-            break;
-    }
-    switch(state) {
-        case (init):
-            break; 
-        case (start):
+        case(init): 
             PORTC = 0x07;
-            break; 
-        case (increment):
-            ++PORTC;
+            state = wait;
             break;
-        case (decrement) :
-            --PORTC;
+        case(wait):
+            if ((input & 0x03) == 0x03) {
+                state = reset;
+            }
+            else if ((input & 0x01) == 0x01) { 
+                state = increment; 
+            }
+            else if ((input & 0x02) == 0x02) {
+                state = decrement;
+            }
+            else {
+                state = wait;
+            }
+            break;
+        case(increment):
+            break;
+        case (decrement):
+            break;
+        case (reset):
             break;
         default:
             break;
     }
+    switch(state) { 
+        case(init):
+            break;
+        case (wait):
+            break;
+        case(increment):
+            if (PORTC < 0x09) {
+                PORTC = PORTC + 1;
+            }
+            break;
+        case (decrement):
+            if (PORTC > 0) {
+                --PORTC;
+            }
+            break;
+        case (reset):
+            PORTC = 0x07;
+        default:
+            break;
+    }
+    state = wait;
  }
 
-int main() {
-    state = start;
+int main(void) {
+    state = init;
     DDRA = 0x00; PORTA = 0xFF;
-    DDRC = 0xFF; PORTC = 0x00; 
+    DDRC = 0xFF; PORTC = 0x00;
+ 
     while(1) {
         tick();
     }
