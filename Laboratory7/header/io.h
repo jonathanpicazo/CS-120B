@@ -8,10 +8,6 @@ void LCD_Cursor (unsigned char column);
 void LCD_DisplayString(unsigned char column ,const unsigned char *string);
 void delay_ms(int miliSec);
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <stdio.h>
-#include "io.h"
 
 #define SET_BIT(p,i) ((p) |= (1 << (i)))
 #define CLR_BIT(p,i) ((p) &= ~(1 << (i)))
