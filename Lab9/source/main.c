@@ -1,233 +1,224 @@
 /*	Author: jpica003
  *  Partner(s) Name: Jonathan Picazo and Wayland Chang
  *	Lab Section:
- *	Assignment: Lab 9:  Exercise 2
+ *	Assignment: Lab 9:  Exercise 1
  *	Exercise Description: [optional - include for your own benefit]
  *
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
  */
-#include <avr/io.h>
 
-enum States {init, state_C4, state_D4, state_E4, state_F4, state_G4, state_A4, state_B4, state_C5, increment, decrement} state;
-enum States_Tog {wait, toggle} toggle_switch;
-unsigned char surge = 0;
-unsigned char down = 0;
-unsigned char up = 0;
-unsigned char elec = 0;
-unsigned char next = 0;
+#include <avr/io.h>
 void set_PWM(double frequency) {
-	static double current_frequency = -1;
+
+	static double current_frequency; // Keeps track of the currently set frequency
+
+	// Will only update the registers when the frequency changes, otherwise allows
+
+	// music to play uninterrupted.
+
 	if (frequency != current_frequency) {
-		if (!frequency) { 
-			TCCR3B &= 0x08; 
-		} 
-		else { 
-			TCCR3B |= 0x03; 
-		}
-		if (frequency < 0.954) { 
-			OCR3A = 0xFFFF; 
-		}
-		else if (frequency > 31250) { 
-			OCR3A = 0x0000; 
-		}
-		else { 
-			OCR3A = (short)(8000000 / (128 * frequency)) - 1; 
-		}
-		TCNT3 = 0; 
-		current_frequency = frequency; 
+
+		if (!frequency) { TCCR3B &= 0x08; } //stops timer/counter
+
+		else { TCCR3B |= 0x03; } // resumes/continues timer/counter
+
+		
+
+		// prevents OCR3A from overflowing, using prescaler 64
+
+		// 0.954 is smallest frequency that will not result in overflow
+
+		if (frequency < 0.954) { OCR3A = 0xFFFF; }
+
+		
+
+		// prevents OCR0A from underflowing, using prescaler 64     // 31250 is largest frequency that will not result in underflow
+
+		else if (frequency > 31250) { OCR3A = 0x0000; }
+
+		
+
+		// set OCR3A based on desired frequency
+
+		else { OCR3A = (short)(8000000 / (128 * frequency)) - 1; }
+
+		
+
+		TCNT3 = 0; // resets counter
+
+		current_frequency = frequency; // Updates the current frequency
+
 	}
+
 }
 
 void PWM_on() {
+
 	TCCR3A = (1 << COM3A0);
+
+	// COM3A0: Toggle PB3 on compare match between counter and OCR0A
+
 	TCCR3B = (1 << WGM32) | (1 << CS31) | (1 << CS30);
+
+	// WGM02: When counter (TCNT0) matches OCR0A, reset counter
+
+	// CS01 & CS30: Set a prescaler of 64
+
 	set_PWM(0);
+
 }
 
 void PWM_off() {
+
 	TCCR3A = 0x00;
+
 	TCCR3B = 0x00;
 
 }
 
-void tick() {
-	down = ~PINA & 0x02;
-	up = ~PINA & 0x04;
-	switch (state) {
-		case init:
-			state = state_C4;
-			break;
-		case increment: 
-		if (up) {
-			state = increment;
+enum STATES{START, INIT, scaleUP, scaleDOWN, off} soundOn;
+
+double scaleIng[8] = {261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25};
+unsigned char tempIn = 0x00;
+unsigned char i = 0x00;
+
+void tick()
+{
+	switch(soundOn)
+	{
+		case START:
+			soundOn = INIT;
+		break;
+		case INIT:
+			if(tempIn == 0x01)
+			{
+				soundOn = off;
+			}
+			
+			else if(tempIn == 0x02)
+			{
+				if(i < 7)
+				{
+					i++;	
+				}
+				soundOn = scaleUP;
+			}
+			
+			else if(tempIn == 0x04)
+			{
+				if(i > 0)
+				{
+					i--;
+				}
+				
+				soundOn = scaleDOWN;
+			}
+			
+			else
+			{
+				soundOn = INIT;
+			}
+			
+		break;
+		case scaleUP:
+			if (tempIn == 0x01)
+			{
+				soundOn = INIT;
+			}
+			
+			else if (tempIn == 0x02)
+			{
+				soundOn = scaleUP;
+			}
+			
+			else if (tempIn == 0x04)
+			{
+				if(i > 0)
+				{
+					i--;
+				}
+				soundOn = scaleDOWN;
+			}
+			
+			else
+			{
+				soundOn = INIT;
+			}
+		break;
+		case scaleDOWN:
+		if (tempIn == 0x01)
+		{
+			soundOn = off;
 		}
-		else {
-			++next;
-			state = next;
+		
+		else if (tempIn == 0x02)
+		{
+			if(i < 7)
+			{
+				i++;	
+			}
+			soundOn = scaleUP;
 		}
-			break;
-		case decrement:
-			if (down) {
-				state = decrement;
-			}
-			else {
-				--next;
-				state = next;
-			}
-			break;
-		case state_C4:
-			if (down) {
-				state = state_C4;
-			} 
-			else if (up) {
-				next = state;
-				state = increment;
-			}
-			break;
-		case state_D4:
-			if (down) {
-				next = state;
-				state = decrement;
-			} 
-			else if (up) {
-				next = state;
-				state = increment;
-			}
-			break;
-		case state_E4:
-			if (down) {
-				next = state;
-				state = decrement;
-			} 
-			else if (up) {
-				next = state;
-				state = increment;
-			}
-			break;
-		case state_F4:
-			if (down) {
-				next = state;
-				state = decrement;
-			} 
-			else if (up) {
-				next = state;
-				state = increment;
-			}
-			break;
-		case state_G4:
-			if (down) {
-				next = state;
-				state = decrement;
-			} else if (up) {
-				next = state;
-				state = increment;
-			}
-			break;
-		case state_A4:
-			if (down) {
-				next = state;
-				state = decrement;
-			} 
-			else if (up) {
-				next = state;
-				state = increment;
-			}
-			break;
-		case state_B4:
-			if (down) {
-				next = state;
-				state = decrement;
-			} 
-			else if (up) {
-				next = state;
-				state = increment;
-			}
-			break;
-		case state_C5:
-			if (down) {
-				next = state;
-				state = decrement;
-			} 
-			else if (up) {
-				state = state_C5;
-			}
-			break;
-		default:
+		
+		else if (tempIn == 0x04)
+		{
+			soundOn = scaleDOWN;
+		}
+		
+		else
+		{
+			soundOn = INIT;
+		}
+		break;
+		case off :
+		if (tempIn == 0x01) {
+			soundOn = off;
+		}
+		else if (tempIn == 0x02) {
+			soundOn = scaleUP;
+		}
+		else if (tempIn == 0x04) {
+			soundOn = scaleDOWN;
+		}
+
+		default: 
 			break;
 	}
-	switch (state) {
-		case init:
-			break;
-		case state_C4:
-			set_PWM(261.63);
-			break;
-		case state_D4:
-			set_PWM(293.66);
-			break;
-		case state_E4:
-			set_PWM(329.63);
-			break;
-		case state_F4:
-			set_PWM(349.23);
-			break;
-		case state_G4:
-			set_PWM(392.00);
-			break;
-		case state_A4:
-			set_PWM(440.00);
-			break;
-		case state_B4:
-			set_PWM(493.88);
-			break;
-		case state_C5:
-			set_PWM(523.25);
-			break;
+	
+	switch(soundOn)
+	{
+		case START:
+		break;
+		case INIT:
+			set_PWM(scaleIng[i]);
+		break;
+		case scaleUP:
+			set_PWM(scaleIng[i]);		
+		break;
+		case scaleDOWN:
+			set_PWM(scaleIng[i]);
+		break;
+		case off:
+			set_PWM(0);
 	}
 }
 
-void tog() {
-	elec = ~PINA & 0x01;
-	switch (toggle_switch) {
-		case wait: 
-			if (elec) {
-				toggle_switch = toggle;
-			}
-			break;
-		case toggle:
-			if (elec) {
-				state = toggle_switch;
-			}
-			else {
-				state = wait;
-			}
-			break;
-		default:
-			toggle_switch = wait;
-			break;
-	}
-	switch (toggle_switch) {
-		case wait:
-			break;
-		case toggle:
-			if (surge) {
-				surge = 0;
-				PWM_off();
-			} else {
-				surge = 1;
-				PWM_on();
-			}
-			break;
-	}
-}
 
-int main(void) {
-	DDRA = 0x00; PINA = 0xFF;
-	DDRB = 0xFF; PINB = 0x00;
-	state = init;
-	while (1) {
+int main(void)
+{
+
+	
+	DDRA = 0x00; PORTA = 0xFF;
+	DDRB = 0xFF; PORTB = 0x00;
+	DDRD = 0xFF; PORTD = 0x00;
+	
+	PWM_on();
+	soundOn = START;
+	
+    while (1) 
+    {
+		tempIn = ~PINA & 0x07;
 		tick();
-		tog();
-	}
-	return 0;
+    }
 }
