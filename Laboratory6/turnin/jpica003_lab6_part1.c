@@ -68,9 +68,8 @@
 	  _avr_timer_M = M;
 	  _avr_timer_cntcurr = _avr_timer_M;
   }
-  void lightTick(){
-	switch (state)
-	{
+  void tick(){
+	switch (state)	{
 		case init:
 			state = light1;
 			break;
@@ -88,13 +87,13 @@
 		case init:
 			break;
 		case light1:
-			tmpC = 0x01;
+			temp = 0x01;
 			break;
 		case light2:
-			tmpC = 0x02;
+			temp = 0x02;
 			break;
 		case light3:
-			tmpC = 0x04;
+			temp = 0x04;
 			break;
 
 	}
@@ -102,17 +101,14 @@
   
 
  int main() {
-	  DDRB = 0xFF; PORTB = 0x00; // Init port B to 0s
+	  DDRB = 0xFF; PORTB = 0x00;
 	  TimerSet(1000);
 	  TimerOn();
 	  state = init;
 	  while(1) {
-		  // User code (i.e. synchSM calls)
-		  lightTick();
-		  while (!TimerFlag);	// Wait 1 sec
+		  tick();
+		  while (!TimerFlag);
 		  TimerFlag = 0;
-		  // Note: For the above a better style would use a synchSM with TickSM()
-		  // This example just illustrates the use of the ISR and flag
 		  PORTB = temp;
 		  
 	  }

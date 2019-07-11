@@ -16,8 +16,8 @@
   // Internal variables for mapping AVR's ISR to our cleaner TimerISR model.
   unsigned long _avr_timer_M = 1; // Start count from here, down to 0. Default 1 ms.
   unsigned long _avr_timer_cntcurr = 0; // Current internal count of 1ms ticks
-  unsigned char tmpA = 0x00;
-  unsigned char tmpC = 0x00;
+  unsigned char input = 0x00;
+  unsigned char temp = 0x00;
 
 
   enum States{init, light1, wait1, light2, wait2, light3, wait3}state;
@@ -72,13 +72,12 @@
 	  _avr_timer_cntcurr = _avr_timer_M;
   }
   void lightTick(){
-	switch (state)
-	{
+	switch (state){
 		case init:
 			state = light1;
 			break;
 		case light1:
-			if(tmpA){
+			if (input){
 				state = wait1;
 			}
 			else{
@@ -86,7 +85,7 @@
 			}
 			break;
 		case wait1:
-			if(tmpA){
+			if (input){
 				state = light1;
 			}
 			else{
@@ -94,7 +93,7 @@
 			}
 			break;
 		case light2:
-			if(tmpA){
+			if (input){
 				state = wait2;
 			}
 			else{
@@ -102,15 +101,15 @@
 			}
 			break;
 		case wait2:
-			if(tmpA){
+			if (input){
 				state = light2;
 			}
-			else{
+			else {
 				state = wait2;
 			}
 			break;
 		case light3:
-			if(tmpA){
+			if (input){
 				state = wait3;
 			}
 			else{
@@ -118,7 +117,7 @@
 			}
 			break;
 		case wait3:
-			if(tmpA){
+			if(input){
 				state = light3;
 			}
 			else{
@@ -128,22 +127,22 @@
 	}
 	switch (state){
 		case light1:
-			tmpC = 0x01;
+			temp = 0x01;
 			break;
 		case wait1:
-			tmpC = 0x01;
+			temp = 0x01;
 			break;
 		case light2:
-			tmpC = 0x02;
+			temp = 0x02;
 			break;
 		case wait2:
-			tmpC = 0x02;
+			temp = 0x02;
 			break;
 		case light3:
-			tmpC = 0x04;
+			temp = 0x04;
 			break;
 		case wait3:
-			tmpC = 0x04;
+			temp = 0x04;
 			break;
 
 	}
@@ -159,14 +158,11 @@
 
 	  while(1) {
 
-	  tmpA = ~PINA & 0x08;
-	  // User code (i.e. synchSM calls)
-	  lightTick();
+	  input = ~PINA & 0x08;
+	  tick();
 	  while (!TimerFlag);	// Wait 1 sec
 	  TimerFlag = 0;
-	  // Note: For the above a better style would use a synchSM with TickSM()
-	  // This example just illustrates the use of the ISR and flag
-	  PORTB = tmpC;
+	  PORTB = temp;
 		  
 	  }
 	  return 0;

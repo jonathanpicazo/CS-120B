@@ -13,60 +13,51 @@
 #endif
 
 
-enum States {init, lock, lock1, unlock} state;
+enum States {init, wait, light0};
+enum States state;
 void tick(){
+    unsigned char input = PINA;
     switch(state){ 
         case(init): 
-            state = lock;
+            state = wait;
             break;
-        case (lock):
-            if ((PINA & 0x04) == 0x04) {
-                state = lock1;
+        case(wait):
+            if (input) { 
+                input = 0;
+                state = light0; 
             }
-            else {
-                state = lock;
-            }
-            break;
-        case (lock1):
-            if ((PINA & 0x02) == 0x02) {
-                state = unlock;
-            }
-            else if (!PINA) {
-                state = lock1;
-            }
-            else {
-                state = lock;
+            else if (!input) {
+                state = wait;
             }
             break;
-        case (unlock):
-            if ((PINA & 0x80) == 0x80) {
-                state = lock;
+        case(light0):
+            if (input) {
+                input = 0;
+                state = wait;
             }
-            else {
-                state = unlock;
+            else if (!input) {
+                state = light0;
             }
+            break;
         default:
             break;
     }
-    switch (state) {
-        case (init):
-            break;
-        case (lock):
-            break;
-        case(lock1):
-            break;
-        case (unlock):
+    switch(state) { 
+        case(wait):
             PORTB = 0x01;
+            break;
+        case(light0):
+            PORTB = 0x02; 
             break;
         default:
             break;
     }
  }
 
-int main(void) {
+int main() {
     state = init;
     DDRA = 0x00; PORTA = 0xFF;
-    DDRB= 0xFF; PORTB = 0x00;
+    DDRB = 0xFF; PORTB = 0x00; 
     while(1) {
         tick();
     }
