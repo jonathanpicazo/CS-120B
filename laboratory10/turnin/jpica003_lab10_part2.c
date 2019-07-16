@@ -47,8 +47,6 @@ unsigned long _avr_timer_cntcurr = 0;
 unsigned char trans_one = 0;
 unsigned char trans_two = 0;
 unsigned char output = 0;
-unsigned char noise = 0;
-unsigned char input;
 
 enum States_one {first_start, light1, light2, light3} state_triple;
 void tick_threelights() {
@@ -122,56 +120,15 @@ void tick_solo() {
 	}
 }
 
-enum sounds{sound_init, s_on, s_off} sound;
-void make_sound(){
-	input = ~PINA & 0x04;
-	switch(sound) { 
-		case sound_init:
-			if (input) {
-				sound = s_on;
-			}
-			else {
-				sound = sound_init;
-			}
-			break;
-		case s_on:
-			if (input) {
-				sound = s_off;
-			}
-			else {
-				sound = sound_init;
-			}
-			break;
-		case s_off:
-			if (input) {
-				sound = s_on;
-			}
-			else {
-				sound = sound_init;
-			}
-	}
-	switch (sound) { 
-		case sound_init:
-			noise = 0x00;
-			break;
-		case s_on:
-			noise = 0x10;
-			break;
-		case s_off:
-			noise = 0x00;
-			break;
-	}
-};
-
 enum states_three {puts} light_sum;
 void tick_join() {
-	switch (light_sum){ 
+	switch(light_sum){ 
 		case puts:
 			break;
 	}
-	switch (light_sum){
+	switch(light_sum){
 		case puts:
-			output = trans_one | trans_two | noise;
+			output = trans_one | trans_two;
 			break;
 	}
 }
@@ -179,11 +136,13 @@ void tick_join() {
 
 
 int main(void) {
-	DDRA = 0x00; PORTA = 0xFF;
-	DDRB = 0xFF; PORTB = 0x00;
+	// Due to difficulties from our breadboard, 
+	// we changed the output port to PORTA
+	DDRA = 0xFF; PORTA = 0x00;
 	unsigned long elapsed = 0;
 	const unsigned long three_hundo = 300;
 	unsigned long normal = 1000;
+
 	TimerSet(three_hundo);
 	TimerOn();
 	state_triple = first_start;
@@ -195,7 +154,6 @@ int main(void) {
 			elapsed = 0;
 		}
 		tick_threelights();
-		make_sound();
 		tick_join();
 		light_sum = puts;
 		PORTA = output;

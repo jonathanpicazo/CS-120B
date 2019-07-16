@@ -43,7 +43,7 @@ void LCD_WriteCommand (unsigned char Command) {
    SET_BIT(CONTROL_BUS,E);
    asm("nop");
    CLR_BIT(CONTROL_BUS,E);
-   delay_ms(2); // ClearScreen requires 1.52ms to execute
+   delay_ms(2); 
 }
 
 void LCD_WriteData(unsigned char Data) {

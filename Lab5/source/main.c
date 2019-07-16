@@ -12,10 +12,11 @@
 #include "simAVRHeader.h"
 #endif
 
+void tick() {
+    
+}
 
 int main() {
     DDRB = 0xFF; PORTB = 0x00;
-    while(1) {
-        PORTB = 0x0F;
-    }
+    
 }
