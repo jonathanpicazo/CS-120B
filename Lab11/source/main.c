@@ -88,9 +88,9 @@ int main(void)
 {
 	// Set Data Direction Registers
 	// Buttons PORTA[0-7], set AVR PORTA to pull down logic
-	DDRA = 0xFF; PORTA = 0x00;
+	DDRC = 0xFF; PORTC = 0x00;
 	DDRB = 0xFF; PORTB = 0x00;
-	DDRC = 0xF0; PORTC = 0x0F; // PC7..4 outputs init 0s, PC3..0 inputs init 1s
+	DDRA = 0xF0; PORTA = 0x0F; // PC7..4 outputs init 0s, PC3..0 inputs init 1s
 	DDRD = 0xFF; PORTD = 0x00;
 	// Period for the tasks
 	unsigned long int SMTick1_calc = 20;
