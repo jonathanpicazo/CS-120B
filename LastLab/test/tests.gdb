@@ -1,4 +1,4 @@
-# Test file for Laboratory11
+# Test file for LastLab
 
 
 # commands.gdb provides the following functions for ease:
