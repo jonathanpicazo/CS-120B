@@ -16,84 +16,94 @@
 #include "timer.h"
 
 
-unsigned char tmpB = 0x00;
-const unsigned char cstring[44]={' ',' ',' ',' ','C','S','1','2','0','B',' ','i','s',' ','L','e','g','e','n','d','.','.','.','w','a','i','t',' ','f','o','r',' ','i','t',' ','D','A','R','Y','!',' ',' ',' ','  '};
+//#include "bit.h"
+//#include "io.c"
 
-enum SM1_States{SM1_output};
-unsigned char countScroll = 1;
 
-unsigned char j = 1;
-int SMTick1(int state){
-	switch(state){
-		case SM1_output:
-		j = 1;
-		while(j <= 16){
-			LCD_Cursor(j);
-			LCD_WriteData(cstring[countScroll+j-2]);
-			if(countScroll+j+1 == 46){
-				countScroll = 1;
+
+const unsigned long tasksPeriod = 500;
+const unsigned long tasksPeriodGCD = 250;
+const unsigned char tasksNum = 1;
+
+unsigned char size = 37;
+unsigned char screenSize = 31;
+unsigned char myString[] = "CS120B is Legend... wait for it DARY!";
+enum SM_scroll {SM_start, SM_advance, SM_clear} mySM;
+	
+task myTask;
+
+int myTick (int state) {
+	unsigned char window = 16;
+	unsigned char stringIndex = 0;
+	static unsigned char currentStart = 0;
+	switch(state) {
+		case SM_start:
+			state = SM_advance;
+			break;
+		case SM_advance:
+			if (currentStart + window - 1 < size) {
+				state = SM_advance;
+			} else {
+				state = SM_clear;
 			}
-			++j;
-		}
-		countScroll++;
-		
+			break;
+		case SM_clear:
+			state = SM_advance;
+			break;
+		default:
+			state = SM_start;
+			break;
+	}
+	switch(state) {
+		case SM_advance:
+			stringIndex = currentStart;
+			unsigned char p = 0;
+			while(p < window) {
+				LCD_Cursor(p + 1);
+				if (stringIndex >= size) {
+					LCD_WriteData(' ');
+				} else {
+					LCD_WriteData(myString[stringIndex]);
+				}
+				stringIndex++;
+				p++;
+			}
+			currentStart++;
+			break;
+		case SM_clear:
+			currentStart = 0;
+			LCD_ClearScreen();
+			break;
 	}
 	return state;
 }
 
 
-int main()
+int main(void)
 {
-	DDRA = 0xF0; PORTA = 0x0F;
-	DDRB = 0xFF; PORTB = 0x00;
-	DDRC = 0xFF; PORTC = 0x00; 
 	DDRD = 0xFF; PORTD = 0x00;
-	// period
-	unsigned long int SMTick1_calc = 250;
+	DDRA = 0xFF; PORTA = 0x00;
+	 LCD_init();
+	 
+	myTask.state = SM_start;
+	myTask.period = tasksPeriod;
+	myTask.elapsedTime = 0;
+	myTask.TickFct = &myTick;
 
-
-	unsigned long int tmpGCD = 1;
-
-	// gcd 
-	unsigned long int GCD = tmpGCD;
-
-	// find period
-	unsigned long int SMTick1_period = SMTick1_calc;
-
-	//tasks setup
-	static task task1;
-	task *tasks[] = { &task1};
-	const unsigned short numTasks = sizeof(tasks)/sizeof(task*);
-
-	// task 1
-	task1.state = 0;
-	task1.period = SMTick1_period;
-	task1.elapsedTime = SMTick1_period;
-	task1.TickFct = &SMTick1;
-
-
-	// set timer
-	TimerSet(GCD);
+	TimerSet(tasksPeriodGCD);
 	TimerOn();
-	LCD_init();
-	LCD_ClearScreen();
-	unsigned short i; // 
-	while(1) {
-		// Scheduler code
-		for ( i = 0; i < numTasks; i++ ) {
-			// Task is ready to tick
-			if ( tasks[i]->elapsedTime >= tasks[i]->period ) {
-				// Setting next state for task
-				tasks[i]->state = tasks[i]->TickFct(tasks[i]->state);
-				// Reset the elapsed time for next tick.
-				tasks[i]->elapsedTime = 0;
-			}
-			tasks[i]->elapsedTime += 1;
+    while (1) 
+    {
+		while(!TimerFlag) {
+			
 		}
-		while(!TimerFlag);
+		
+		//if (myTask.elapsedTime >= myTask.period) {
+			myTask.state = myTask.TickFct(myTask.state);
+			//myTask.elapsedTime = 0;
+		//}
+		//myTask.elapsedTime += tasksPeriodGCD;
+		
 		TimerFlag = 0;
-	}
-
-	// Error: Program should not exit!
-	return 0;
+    }
 }
