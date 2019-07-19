@@ -1,4 +1,4 @@
-/*	Author: jpica003
+/*	Author: jpica003, wchan051
  *  Partner(s) Name: Jonathan Picazo and Wayland Chang
  *	Lab Section:
  *	Assignment: Lab 11  Exercise 2
@@ -9,18 +9,17 @@
  */
 #include <avr/io.h>
 #include <avr/interrupt.h>
+//#include "simAVRHeader.h"
 #include <stdio.h>
 #include "io.h"
-#include "bit.h"
 #include "scheduler.h"
 #include "timer.h"
-
 char* str = "CS120B is Legend... wait for it DARY! ";
 unsigned char count = 0;
 unsigned char output[16];
-int j;
+unsigned char j;
 enum states {init} state;
-int tick_funct(state) {
+int tick(state) {
 	j = 0;
 	while (j < 16) {
 		output[j] = str[(count+j) % 38];
@@ -42,12 +41,12 @@ int main(void) {
 	task1.state = -1;
 	task1.period = SMTick1_period;
 	task1.elapsedTime = SMTick1_period;
-	task1.TickFct = &tick_funct;
+	task1.TickFct = &tick;
 	TimerSet(GCD);
 	TimerOn();
 	LCD_init();
 	unsigned short i;
-	while(1) {
+	while (1) {
 		i = 0;
 		while (i < taskSize) {
 			if ( tasks[i]->elapsedTime == tasks[i]->period) {

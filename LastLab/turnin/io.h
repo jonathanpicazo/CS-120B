@@ -13,14 +13,12 @@ void delay_ms(int miliSec);
 #define CLR_BIT(p,i) ((p) &= ~(1 << (i)))
 #define GET_BIT(p,i) ((p) & (1 << (i)))
           
-/*-------------------------------------------------------------------------*/
 
-#define DATA_BUS PORTC		// port connected to pins 7-14 of LCD display
-#define CONTROL_BUS PORTD	// port connected to pins 4 and 6 of LCD disp.
-#define RS 6			// pin number of uC connected to pin 4 of LCD disp.
-#define E 7			// pin number of uC connected to pin 6 of LCD disp.
+#define DATA_BUS PORTC		
+#define CONTROL_BUS PORTD	
+#define RS 6			
+#define E 7			
 
-/*-------------------------------------------------------------------------*/
 
 void LCD_ClearScreen(void) {
    LCD_WriteCommand(0x01);
@@ -28,7 +26,6 @@ void LCD_ClearScreen(void) {
 
 void LCD_init(void) {
 
-    //wait for 100 ms.
 	delay_ms(100);
 	LCD_WriteCommand(0x38);
 	LCD_WriteCommand(0x06);
@@ -43,7 +40,7 @@ void LCD_WriteCommand (unsigned char Command) {
    SET_BIT(CONTROL_BUS,E);
    asm("nop");
    CLR_BIT(CONTROL_BUS,E);
-   delay_ms(2); // ClearScreen requires 1.52ms to execute
+   delay_ms(2); 
 }
 
 void LCD_WriteData(unsigned char Data) {
@@ -65,16 +62,14 @@ void LCD_DisplayString( unsigned char column, const unsigned char* string) {
 }
 
 void LCD_Cursor(unsigned char column) {
-   if ( column < 17 ) { // 16x1 LCD: column < 9
-						// 16x2 LCD: column < 17
+   if ( column < 17 ) { 
       LCD_WriteCommand(0x80 + column - 1);
    } else {
-      LCD_WriteCommand(0xB8 + column - 9);	// 16x1 LCD: column - 1
-											// 16x2 LCD: column - 9
+      LCD_WriteCommand(0xB8 + column - 9);
    }
 }
 
-void delay_ms(int miliSec) //for 8 Mhz crystal
+void delay_ms(int miliSec) 
 
 {
     int i,j;
