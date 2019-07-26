@@ -14,8 +14,8 @@ void delay_ms(int miliSec);
 #define GET_BIT(p,i) ((p) & (1 << (i)))
           
 
-#define DATA_BUS PORTC		
-#define CONTROL_BUS PORTD	
+#define DATA_BUS PORTA		
+#define CONTROL_BUS PORTB	
 #define RS 6			
 #define E 7			
 
